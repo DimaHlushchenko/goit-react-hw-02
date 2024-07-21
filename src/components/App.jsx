@@ -1,24 +1,48 @@
-import { Profile } from './Profile.jsx';
-import { FriendList } from './FriendList.jsx';
-import { TransactionHistory } from './TransactionHistory.jsx';
-import userData from '../assets/userData.json';
-import friends from "../assets/friends.json";
-import transactions from '../assets/transactions.json';
+import { useState, useEffect } from 'react'
+import Description from './Description'
+import Options from './Options'
+import Feedback from './Feedback'
+import Notification from './Notification'
+import './App.css'
 
-const App = () => {
-    return (
-        <>
-            <Profile
-            name={userData.username}
-            tag={userData.tag}
-            location={userData.location}
-            image={userData.avatar}
-            stats={userData.stats}
-            />
-        <FriendList friends={friends} />
-        <TransactionHistory items={transactions} />
+function App() {
+  const getInitialFeedback = () => {
+    const savedFeedback = JSON.parse(localStorage.getItem('feedback'));
+    return savedFeedback ? savedFeedback : { good: 0, neutral: 0, bad: 0 };
+  };
+
+  const [feedback, setFeedback] = useState(getInitialFeedback);
+
+  useEffect(() => {
+    localStorage.setItem('feedback', JSON.stringify(feedback));
+  }, [feedback]);
+
+  const updateFeedback = (feedbackType) => {
+    setFeedback((prevFeedback) => ({
+      ...prevFeedback,
+      [feedbackType]: prevFeedback[feedbackType] + 1,
+    }));
+  };
+
+  const resetFeedback = () => {
+    setFeedback({ good: 0, neutral: 0, bad: 0 });
+  };
+
+  const totalFeedback = feedback.good + feedback.neutral + feedback.bad;
+
+  const positiveFeedbackPercentage = totalFeedback ? Math.round((feedback.good / totalFeedback) * 100) : 0;
+
+  return (
+    <>
+      <Description />
+      <Options updateFeedback={updateFeedback} totalFeedback={totalFeedback} onReset={resetFeedback} />
+      {totalFeedback > 0 ? (
+        <Feedback feedback={feedback} total={totalFeedback} positivePercentage={positiveFeedbackPercentage} />
+      ) : (
+        <Notification message="No feedback yet" />
+      )}
     </>
-);
-};
+  )
+}
 
 export default App
